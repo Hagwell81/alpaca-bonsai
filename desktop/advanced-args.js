@@ -154,6 +154,24 @@ function kvPrecisionBytes(kvCacheType) {
  * @returns {number} integer in [1, 256]
  */
 function detectPhysicalCores(osModule = require('os')) {
+  // Prefer Node's availableParallelism() (Node 18.14+) which returns the
+  // number of concurrently runnable threads. This is the most reliable
+  // cross-platform API and doesn't suffer from the model-string dedup
+  // bug that the legacy signature-based approach had (all logical CPUs
+  // on modern Ryzen/Intel chips report the same model+speed string and
+  // collapse to a Set of size 1, yielding "1 physical core").
+  if (typeof osModule.availableParallelism === 'function') {
+    try {
+      const n = osModule.availableParallelism();
+      if (Number.isFinite(n) && n > 0) {
+        return Math.min(256, Math.floor(n));
+      }
+    } catch (_) { /* fall through */ }
+  }
+
+  // Fallback: os.cpus().length gives the logical CPU count (threads).
+  // This overcounts on hyperthreaded/SMT CPUs but is a safe lower bound
+  // for thread-pool sizing — llama-server handles oversubscription fine.
   let cpus;
   try {
     cpus = osModule.cpus();
@@ -163,13 +181,7 @@ function detectPhysicalCores(osModule = require('os')) {
   if (!Array.isArray(cpus) || cpus.length === 0) {
     return 4;
   }
-  const signatures = new Set();
-  for (const cpu of cpus) {
-    if (cpu && typeof cpu === 'object') {
-      signatures.add(`${cpu.model}|${cpu.speed}`);
-    }
-  }
-  const count = signatures.size;
+  const count = cpus.length;
   if (count <= 0) {
     return 4;
   }

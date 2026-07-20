@@ -2068,6 +2068,14 @@ async function startLlamaServer(forceCpuBackend = false) {
         args.push('-c', String(ov.ctxSize));
       }
 
+      // Parallel slots (-np)
+      // Bonsai presets force -np 1 to keep KV cache bounded. Without this,
+      // llama-server auto-detects -np 4 which multiplies KV cache by 4 and
+      // can spill to system RAM, killing decode performance.
+      if (ov.parallel !== undefined && !args.includes('-np')) {
+        args.push('-np', String(ov.parallel));
+      }
+
       // KV cache types
       if (ov.typeK && ov.typeK !== 'f16' && !args.includes('--type-k') && !args.includes('--cache-type-k')) {
         args.push('--type-k', ov.typeK);
@@ -2343,6 +2351,10 @@ async function startLlamaServer(forceCpuBackend = false) {
     ...process.env,
     PATH: `${binDir}${path.delimiter}${process.env.PATH || ''}`,
   };
+  // Log the full argv so perf regressions (missing -ngl, wrong -t, -c, -np)
+  // are visible in the service log without having to reproduce the spawn.
+  console.log('[startLlamaServer] Final argv:', JSON.stringify(args));
+
   const spawnedProcess = spawn(llamaServerBinary, args, { env: spawnEnv });
   llamaServerProcess = spawnedProcess;
 

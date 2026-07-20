@@ -1,6 +1,6 @@
 # Alpaca
 
-![alpaca](media/alpaca.png)
+![alpaca](media/alpaca-logo-small.png)
 
 **Alpaca** is a user-friendly desktop application and web chat interface built on top of [llama.cpp](https://github.com/ggml-org/llama.cpp), bringing the power of local LLM inference to everyday users through an intuitive, Ollama-like experience — with integrated **Bonsai ternary and image model** support.
 

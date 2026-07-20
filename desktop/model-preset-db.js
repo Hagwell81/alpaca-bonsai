@@ -58,7 +58,9 @@ const MODEL_PRESETS = Object.freeze({
     ],
     overrides: {
       flashAttn: true,
-      ctxSize: 0,           // auto-fit to available memory
+      ctxSize: 16384,       // bounded context — auto-fit (0) allocates 262K×4 slots
+                            // which spills KV cache to system RAM and kills perf
+      parallel: 1,          // single slot — multi-slot multiplies KV cache
       nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
@@ -105,7 +107,8 @@ const MODEL_PRESETS = Object.freeze({
     ],
     overrides: {
       flashAttn: true,
-      ctxSize: 0,           // auto-fit to available memory
+      ctxSize: 32768,       // bounded context (8B KV cache is small)
+      parallel: 1,          // single slot
       nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
@@ -133,7 +136,8 @@ const MODEL_PRESETS = Object.freeze({
     ],
     overrides: {
       flashAttn: true,
-      ctxSize: 0,           // auto-fit to available memory
+      ctxSize: 32768,       // bounded context (4B KV cache is tiny)
+      parallel: 1,          // single slot
       nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
