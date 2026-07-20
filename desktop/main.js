@@ -1119,11 +1119,12 @@ function getSetupHtml(modelOptions = '') {
 }
 
 function loadSettingsWindow() {
-  if (!mainWindow) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    mainWindow = null;
     createWindow();
   }
   const settingsHtmlPath = path.join(__dirname, 'settings.html');
-  if (fs.existsSync(settingsHtmlPath)) {
+  if (fs.existsSync(settingsHtmlPath) && mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.loadFile(settingsHtmlPath);
     mainWindow.show();
     mainWindow.focus();
@@ -1186,14 +1187,14 @@ async function createWindow() {
           label: 'Reload',
           accelerator: 'Ctrl+R',
           click: () => {
-            mainWindow.reload();
+            if (mainWindow && !mainWindow.isDestroyed()) mainWindow.reload();
           }
         },
         {
           label: 'Toggle Developer Tools',
           accelerator: 'Ctrl+Shift+I',
           click: () => {
-            mainWindow.webContents.toggleDevTools();
+            if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.toggleDevTools();
           }
         }
       ]
@@ -1438,10 +1439,10 @@ async function createWindow() {
   mainWindow.on('close', (event) => {
     if (!app.isQuitting) {
       event.preventDefault();
-      mainWindow.hide();
+      if (!mainWindow.isDestroyed()) mainWindow.hide();
 
       // Show notification that app is running in tray
-      if (process.platform === 'win32' && tray) {
+      if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
         tray.displayBalloon({
           title: 'alpaca',
           content: 'App is running in the system tray. Click the tray icon to restore.'
@@ -1570,6 +1571,32 @@ async function launchTui(opts = {}) {
   }
 }
 
+/**
+ * Safely show and focus the main window, recreating it if the previous
+ * BrowserWindow has been destroyed.
+ *
+ * The close-to-tray flow hides the window instead of destroying it, but the
+ * underlying BrowserWindow can still be destroyed by external triggers
+ * (OS cleanup, `quitApplication`, `cleanupBeforeExit`, or a race between
+ * the 'closed' event and a tray click). Calling `mainWindow.show()` on a
+ * destroyed window throws `TypeError: Object has been destroyed`, which
+ * was the crash users saw when re-opening the app from the tray.
+ *
+ * This helper is the single safe entry point for "bring the window to the
+ * front" used by the tray menu, tray double-click, and second-instance
+ * handlers.
+ */
+function showMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+  } else {
+    mainWindow = null;
+    createWindow();
+  }
+}
+
 function createTray() {
   // Create tray icon
   let iconPath;
@@ -1591,12 +1618,7 @@ function createTray() {
     {
       label: 'Alpaca',
       click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        } else {
-          createWindow();
-        }
+        showMainWindow();
       }
     },
     { type: 'separator' },
@@ -1781,12 +1803,7 @@ function createTray() {
   tray.setContextMenu(contextMenu);
 
   tray.on('double-click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-    } else {
-      createWindow();
-    }
+    showMainWindow();
   });
 }
 
@@ -4332,11 +4349,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      if (!mainWindow.isVisible()) mainWindow.show();
-      mainWindow.focus();
-    }
+    showMainWindow();
   });
 }
 
