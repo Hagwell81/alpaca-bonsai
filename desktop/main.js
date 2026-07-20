@@ -2055,6 +2055,14 @@ async function startLlamaServer(forceCpuBackend = false) {
         args.push('-fa', 'on');
       }
 
+      // GPU layer offload (-ngl)
+      // The bonsai presets set nGpuLayers: 99 (full offload). For models
+      // without an explicit preset, fall back to 99 when a GPU backend is
+      // detected so inference doesn't silently run on CPU.
+      if (ov.nGpuLayers !== undefined && !args.includes('-ngl') && !args.includes('--n-gpu-layers')) {
+        args.push('-ngl', String(ov.nGpuLayers));
+      }
+
       // Context size (-c 0 = auto-fit to memory)
       if (ov.ctxSize !== undefined && !args.includes('-c')) {
         args.push('-c', String(ov.ctxSize));
@@ -2182,6 +2190,37 @@ async function startLlamaServer(forceCpuBackend = false) {
     }
   } catch (presetErr) {
     console.warn('[startLlamaServer] Preset lookup failed:', presetErr.message);
+  }
+
+  // ── GPU offload fallback ───────────────────────────────────────────────
+  // If no preset applied -ngl (e.g. a non-bonsai model with no matching
+  // preset), detect the best available backend and default to full offload
+  // (-ngl 99). Without this, llama-server defaults to -ngl 0 (CPU-only),
+  // which gives ~8 tok/s on a 27B model instead of 30-60+ tok/s on GPU.
+  if (!args.includes('-ngl') && !args.includes('--n-gpu-layers')) {
+    const backend = getBestBackend();
+    if (backend !== 'cpu') {
+      args.push('-ngl', '99');
+      console.log(`[startLlamaServer] GPU backend (${backend}) detected — applying -ngl 99 (full offload)`);
+    } else {
+      console.log('[startLlamaServer] No GPU backend detected — running on CPU (no -ngl)');
+    }
+  }
+
+  // ── Thread count fallback ──────────────────────────────────────────────
+  // Ensure -t is set so llama-server uses all physical cores rather than
+  // its conservative default. On the Ryzen AI 9 HX 370 (12 physical cores),
+  // this ensures CPU-side operations (tokenizer, sampling, partial layers)
+  // use the full CPU.
+  if (!args.includes('-t') && !args.includes('--threads')) {
+    try {
+      const { detectPhysicalCores } = require('./advanced-args');
+      const cores = detectPhysicalCores();
+      if (cores > 0) {
+        args.push('-t', String(cores));
+        console.log(`[startLlamaServer] Threads: -t ${cores} (physical cores)`);
+      }
+    } catch (_) { /* detectPhysicalCores not available — let llama-server default */ }
   }
 
   // Check for mmproj (vision/multimodal projector) file matched to the active model

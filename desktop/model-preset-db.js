@@ -59,6 +59,7 @@ const MODEL_PRESETS = Object.freeze({
     overrides: {
       flashAttn: true,
       ctxSize: 0,           // auto-fit to available memory
+      nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
       // Sampling defaults from Bonsai-demo (27B uses more creative sampling)
@@ -105,6 +106,7 @@ const MODEL_PRESETS = Object.freeze({
     overrides: {
       flashAttn: true,
       ctxSize: 0,           // auto-fit to available memory
+      nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
       // Smaller models use less creative sampling and disable thinking
@@ -132,6 +134,7 @@ const MODEL_PRESETS = Object.freeze({
     overrides: {
       flashAttn: true,
       ctxSize: 0,           // auto-fit to available memory
+      nGpuLayers: 99,       // full offload to GPU (all layers)
       typeK: 'f16',
       typeV: 'f16',
       sampling: {

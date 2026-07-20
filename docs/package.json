@@ -1,6 +1,6 @@
 {
   "name": "alpaca-docs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Documentation site for Alpaca - Local AI Chat & Development Platform",
   "private": true,
   "scripts": {

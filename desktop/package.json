@@ -1,6 +1,6 @@
 {
   "name": "alpaca",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Desktop application for llama.cpp / sd.cpp / whisper.cpp with Bonsai ternary and image models, secure data storage, performance optimizations, and integrated documentation",
   "main": "main.js",
   "scripts": {
