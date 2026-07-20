@@ -1,6 +1,6 @@
 {
   "name": "alpaca-monorepo",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Alpaca - Local AI Chat & Development Platform with Bonsai model support",
   "private": true,
   "scripts": {

@@ -1883,13 +1883,34 @@ async function startLlamaServer(forceCpuBackend = false) {
     return false;
   }
 
+  // ── Ternary bonsai backend selection ───────────────────────────────────
+  // Ternary bonsai models (Q2_0 1.58-bit) have specialized fast kernels
+  // (TernaryLinear, bit-packed dot products) that are ONLY implemented in
+  // the CPU backend with AVX512_VNNI. The Vulkan/CUDA backends fall back to
+  // generic Q2_0 dequantization which is dramatically slower for ternary
+  // models (7-8 t/s on Vulkan vs 30-60+ t/s on CPU with AVX512_VNNI).
+  //
+  // The PrismML-Eng/llama.cpp bonsai fork publishes both CPU and GPU builds.
+  // For ternary models, we force the CPU backend to get the fast ternary
+  // kernels. This is the design intent of ternary models — they trade
+  // precision for CPU speed, not GPU speed.
+  const activeModelFilenameForBackend = store.get('activeModelFilename', null);
+  const isTernaryBonsaiModel = activeModelFilenameForBackend
+    ? /ternary[-_]?bonsai/i.test(activeModelFilenameForBackend)
+    : false;
+  const forceCpuForTernary = isTernaryBonsaiModel && !forceCpuBackend;
+  if (forceCpuForTernary) {
+    console.log(`[startLlamaServer] Ternary bonsai model detected ("${activeModelFilenameForBackend}") — forcing CPU backend for fast ternary kernels (AVX512_VNNI). Vulkan/CUDA lack ternary fast kernels and would give ~7 t/s via generic Q2_0 dequant.`);
+  }
+  const useCpuBackend = forceCpuBackend || forceCpuForTernary;
+
   let llamaServerBinary = findLlamaServerBinary();
 
   // If no bundled binary exists, try to download the correct backend from GitHub releases
   if (!llamaServerBinary) {
     try {
       console.log('[startLlamaServer] No bundled llama-server found; downloading backend...');
-      const caps = forceCpuBackend
+      const caps = useCpuBackend
         ? { ...getCachedHardwareCapabilities(), cuda: false, vulkan: false, rocm: false }
         : getCachedHardwareCapabilities();
       const backendName = binaryManager.mapCapabilitiesToBackend(caps);
@@ -2059,8 +2080,16 @@ async function startLlamaServer(forceCpuBackend = false) {
       // The bonsai presets set nGpuLayers: 99 (full offload). For models
       // without an explicit preset, fall back to 99 when a GPU backend is
       // detected so inference doesn't silently run on CPU.
+      // EXCEPTION: When running on the CPU backend (e.g. ternary bonsai
+      // models that need CPU AVX512_VNNI fast kernels), skip -ngl entirely
+      // — there's no GPU to offload to, and -ngl 99 on the CPU backend
+      // either errors or is silently ignored.
       if (ov.nGpuLayers !== undefined && !args.includes('-ngl') && !args.includes('--n-gpu-layers')) {
-        args.push('-ngl', String(ov.nGpuLayers));
+        if (useCpuBackend) {
+          console.log('[startLlamaServer] Skipping -ngl (CPU backend — no GPU offload for ternary model)');
+        } else {
+          args.push('-ngl', String(ov.nGpuLayers));
+        }
       }
 
       // Context size (-c 0 = auto-fit to memory)
@@ -2206,12 +2235,16 @@ async function startLlamaServer(forceCpuBackend = false) {
   // (-ngl 99). Without this, llama-server defaults to -ngl 0 (CPU-only),
   // which gives ~8 tok/s on a 27B model instead of 30-60+ tok/s on GPU.
   if (!args.includes('-ngl') && !args.includes('--n-gpu-layers')) {
-    const backend = getBestBackend();
-    if (backend !== 'cpu') {
-      args.push('-ngl', '99');
-      console.log(`[startLlamaServer] GPU backend (${backend}) detected — applying -ngl 99 (full offload)`);
+    if (useCpuBackend) {
+      console.log('[startLlamaServer] CPU backend in use — skipping -ngl (no GPU offload)');
     } else {
-      console.log('[startLlamaServer] No GPU backend detected — running on CPU (no -ngl)');
+      const backend = getBestBackend();
+      if (backend !== 'cpu') {
+        args.push('-ngl', '99');
+        console.log(`[startLlamaServer] GPU backend (${backend}) detected — applying -ngl 99 (full offload)`);
+      } else {
+        console.log('[startLlamaServer] No GPU backend detected — running on CPU (no -ngl)');
+      }
     }
   }
 
@@ -2414,7 +2447,7 @@ async function startLlamaServer(forceCpuBackend = false) {
 
     // If GPU backend crashed and we haven't tried CPU fallback yet, retry with CPU
     const backendName = binaryManager.mapCapabilitiesToBackend(getCachedHardwareCapabilities());
-    const isGpuBackend = !backendName.includes('cpu') && !forceCpuBackend;
+    const isGpuBackend = !backendName.includes('cpu') && !useCpuBackend;
     if (isGpuBackend) {
       console.warn(`[startLlamaServer] GPU backend (${backendName}) crashed with exit code ${exitCode}. Retrying with CPU backend...`);
       if (stderrTail) console.warn(`[startLlamaServer] stderr: ${stderrTail}`);
