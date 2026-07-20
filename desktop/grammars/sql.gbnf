@@ -1,0 +1,93 @@
+root := statement
+
+statement := select_stmt | insert_stmt | update_stmt | delete_stmt | create_stmt | drop_stmt | alter_stmt
+
+select_stmt := "SELECT" [distinct] select_list from_clause [where_clause] [group_by_clause] [having_clause] [order_by_clause] [limit_clause]
+
+distinct := "DISTINCT"
+
+select_list := select_item ("," select_item)*
+
+select_item := expr [alias]
+
+alias := "AS" identifier | identifier
+
+from_clause := "FROM" table_ref ("," table_ref)*
+
+table_ref := table_name [alias] | "(" select_stmt ")" [alias]
+
+table_name := identifier
+
+where_clause := "WHERE" expr
+
+group_by_clause := "GROUP" "BY" expr ("," expr)*
+
+having_clause := "HAVING" expr
+
+order_by_clause := "ORDER" "BY" order_item ("," order_item)*
+
+order_item := expr [asc_desc]
+
+asc_desc := "ASC" | "DESC"
+
+limit_clause := "LIMIT" number [offset_clause]
+
+offset_clause := "OFFSET" number
+
+insert_stmt := "INSERT" "INTO" table_name ["(" column_list ")"] "VALUES" value_list
+
+column_list := identifier ("," identifier)*
+
+value_list := "(" expr ("," expr)* ")" ("," "(" expr ("," expr)* ")")*
+
+update_stmt := "UPDATE" table_name "SET" assignment ("," assignment)* [where_clause]
+
+assignment := identifier "=" expr
+
+delete_stmt := "DELETE" "FROM" table_name [where_clause]
+
+create_stmt := "CREATE" "TABLE" table_name "(" column_def ("," column_def)* ")"
+
+column_def := identifier data_type [constraints]
+
+data_type := "INT" | "VARCHAR" | "TEXT" | "BOOLEAN" | "DATE" | "TIMESTAMP" | "FLOAT" | "DECIMAL"
+
+constraints := ("NOT" "NULL" | "PRIMARY" "KEY" | "UNIQUE" | "DEFAULT" expr)*
+
+drop_stmt := "DROP" "TABLE" table_name
+
+alter_stmt := "ALTER" "TABLE" table_name alter_action
+
+alter_action := "ADD" column_def | "DROP" "COLUMN" identifier | "RENAME" "TO" table_name
+
+expr := or_expr
+
+or_expr := and_expr ("OR" and_expr)*
+
+and_expr := comparison ("AND" comparison)*
+
+comparison := additive_expr (comp_op additive_expr)*
+
+comp_op := "=" | "!=" | "<>" | "<" | ">" | "<=" | ">=" | "LIKE" | "IN" | "BETWEEN" | "IS"
+
+additive_expr := multiplicative_expr (("+" | "-") multiplicative_expr)*
+
+multiplicative_expr := unary_expr (("*" | "/" | "%") unary_expr)*
+
+unary_expr := ("NOT" | "-")* primary_expr
+
+primary_expr := literal | identifier | function_call | "(" expr ")" | case_expr
+
+literal := number | string | "NULL" | "TRUE" | "FALSE"
+
+number := [0-9]+ ("." [0-9]+)?
+
+string := "'" [^']* "'"
+
+identifier := [a-zA-Z_] [a-zA-Z0-9_]*
+
+function_call := identifier "(" [expr ("," expr)*] ")"
+
+case_expr := "CASE" [expr] (when_clause)+ ["ELSE" expr] "END"
+
+when_clause := "WHEN" expr "THEN" expr

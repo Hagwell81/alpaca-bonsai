@@ -1,0 +1,291 @@
+{
+  "name": "alpaca",
+  "version": "1.0.0",
+  "description": "Desktop application for llama.cpp / sd.cpp / whisper.cpp with Bonsai ternary and image models, secure data storage, performance optimizations, and integrated documentation",
+  "main": "main.js",
+  "scripts": {
+    "test": "mocha tests/**/*.test.js --timeout 30000",
+    "test:preload": "mocha tests/preload-optimization.test.js --timeout 30000",
+    "test:benchmark": "mocha tests/preload-optimization-benchmark.js --timeout 60000",
+    "copy-webui": "node build-webui.js",
+    "copy-docs": "node build-docs.js",
+    "build:jcm": "node scripts/build-jcm.js",
+    "build:tui": "cd ../tui && cargo build --release",
+    "start": "electron .",
+    "clean": "node clean-dist.js",
+    "build": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder",
+    "build:win": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --win",
+    "build:mac": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --mac",
+    "build:linux": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --linux",
+    "build:portable": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --win portable",
+    "build:installer": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --win nsis",
+    "build:dmg": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --mac --x64 --config.dmg.target=dmg",
+    "build:pkg": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --mac --x64 --config.pkg.target=pkg",
+    "build:appimage": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --linux --x64 --config.linux.target=AppImage",
+    "build:deb": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --linux --x64 --config.linux.target=deb",
+    "build:rpm": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --linux --x64 --config.linux.target=rpm",
+    "build:snap": "npm run clean && npm run build:jcm && npm run build:tui && npm run copy-webui && npm run copy-docs && electron-builder --linux --x64 --config.linux.target=snap"
+  },
+  "build": {
+    "appId": "com.alpaca.bonsai",
+    "productName": "Alpaca",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "binary-manager.js",
+      "api-server.js",
+      "request-manager.js",
+      "request-batcher.js",
+      "splash-manager.js",
+      "lazy-start-manager.js",
+      "logs-viewer.js",
+      "voice-service.js",
+      "vision-pairing-manager.js",
+      "grammar-library.js",
+      "vram-budget-manager.js",
+      "model-config-store.js",
+      "model-slot-manager.js",
+      "tool-rewriter.js",
+      "api-gateway.js",
+      "api-compat.js",
+      "model-loader.js",
+      "model-classifier.js",
+      "slot-args-builder.js",
+      "slot-selector.js",
+      "ngl-optimizer.js",
+      "preset-recommender.js",
+      "advanced-args.js",
+      "chat-template-detector.js",
+      "user-migration.js",
+      "migration-dialog-manager.js",
+      "api-key-migration.js",
+      "hf-model-service.js",
+      "key-derivation.js",
+      "secret-vault.js",
+      "settings.js",
+      "telemetry-ui.js",
+      "runner-ref.js",
+      "eviction-ranker.js",
+      "health-probe.js",
+      "vram-tracker.js",
+      "gguf-metadata-cache.js",
+      "scheduler.js",
+      "knowledge-base.js",
+      "knowledge-base-mcp.js",
+      "knowledge-base-mcp-launcher.js",
+      "workspace-manager.js",
+      "launch-service.js",
+      "ide-config-generator.js",
+      "image-service.js",
+      "bonsai-models.js",
+      "hf-token-migration.js",
+      "startup-telemetry.js",
+      "backend-feature-detector.js",
+      "model-preset-db.js",
+      "test-load.js",
+      "public/**/*",
+      "docs/**/*",
+      "bin/**/*",
+      "resources/**/*",
+      "grammars/**/*",
+      "*.html",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "public/**/*",
+      "bin/**/*",
+      "grammars/**/*",
+      "resources/tui/**/*",
+      "preload.js"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/alpaca.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "pkg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "resources/alpaca.icns",
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "artifactName": "Alpaca-${version}-macOS.dmg",
+      "title": "Alpaca",
+      "background": "resources/dmg-background.png",
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 144,
+          "y": 180,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "pkg": {
+      "artifactName": "Alpaca-${version}-macOS.pkg",
+      "installLocation": "/Applications",
+      "background": {
+        "file": "resources/pkg-background.png",
+        "alignment": "center",
+        "scaling": "tofit"
+      }
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "snap",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/alpaca.png",
+      "category": "Development",
+      "maintainer": "Alpaca Team",
+      "vendor": "Alpaca",
+      "synopsis": "Local AI Chat & Development Platform",
+      "description": "Alpaca brings the power of local LLM inference to everyday users through an intuitive desktop application with a modern chat interface, Bonsai ternary and image model support, and model management."
+    },
+    "appImage": {
+      "artifactName": "Alpaca-${version}-linux.AppImage",
+      "synopsis": "Local AI Chat & Development Platform"
+    },
+    "deb": {
+      "artifactName": "alpaca_${version}_amd64.deb",
+      "depends": [
+        "gconf2",
+        "gconf-service",
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3"
+      ]
+    },
+    "rpm": {
+      "artifactName": "alpaca-${version}.x86_64.rpm",
+      "depends": [
+        "gconf2",
+        "gconf-service",
+        "libnotify4",
+        "libappindicator",
+        "libxtst",
+        "nss"
+      ]
+    },
+    "snap": {
+      "artifactName": "alpaca_${version}_amd64.snap",
+      "grade": "stable",
+      "confinement": "strict",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "network",
+        "network-bind",
+        "removable-media",
+        "unity7"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": true,
+      "artifactName": "Alpaca-Setup-${version}.exe",
+      "include": "installer.nsh",
+      "installerIcon": "resources/alpaca.ico",
+      "uninstallerIcon": "resources/alpaca.ico",
+      "license": "LICENSE",
+      "perMachine": false,
+      "allowElevation": true,
+      "installerLanguages": [
+        "en_US"
+      ],
+      "language": "1033"
+    },
+    "portable": {
+      "artifactName": "Alpaca-Portable-${version}.exe"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "sqlite3": "^6.0.1"
+  },
+  "optionalDependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "electron": "^41.2.2",
+    "electron-builder": "^26.8.1",
+    "fast-check": "^4.7.0",
+    "jsdom": "^29.1.1",
+    "mocha": "^11.7.5",
+    "sinon": "^22.0.0"
+  }
+}

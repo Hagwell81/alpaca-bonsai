@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Service Logs — Alpaca</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: #161b22;
+        --border: #30363d;
+        --fg: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --warn: #d29922;
+        --error: #f85149;
+        --ok: #3fb950;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        flex: 0 0 auto;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 6px var(--ok);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.45; }
+      }
+      .path {
+        color: var(--muted);
+        font-family: ui-monospace, Consolas, "Cascadia Mono", monospace;
+        font-size: 11px;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .toolbar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      button, label.filter {
+        background: #21262d;
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      button:hover { background: #30363d; }
+      button.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0d1117;
+      }
+      input[type="search"] {
+        background: #0d1117;
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 5px 8px;
+        font-size: 12px;
+        min-width: 180px;
+      }
+      main {
+        height: calc(100vh - 49px);
+        overflow: auto;
+        padding: 8px 14px;
+        font-family: ui-monospace, Consolas, "Cascadia Mono", monospace;
+        font-size: 12px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .line { padding: 1px 0; }
+      .line.warn { color: var(--warn); }
+      .line.error { color: var(--error); }
+      .line.info { color: var(--fg); }
+      .line.hidden { display: none; }
+      .placeholder {
+        color: var(--muted);
+        font-style: italic;
+        padding: 12px 0;
+      }
+      .truncated-banner {
+        background: rgba(210, 153, 34, 0.1);
+        border: 1px solid var(--warn);
+        color: var(--warn);
+        padding: 6px 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-family: inherit;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><span class="status-dot" title="Live"></span> Service Logs</h1>
+      <div class="path" id="logPath">loading…</div>
+      <div class="toolbar">
+        <input type="search" id="filter" placeholder="Filter lines…" autocomplete="off" />
+        <button id="btnLevelAll" class="active" data-level="all">All</button>
+        <button id="btnLevelWarn" data-level="warn">Warn+</button>
+        <button id="btnLevelError" data-level="error">Errors</button>
+        <button id="btnAutoscroll" class="active" title="Toggle auto-scroll">Auto-scroll</button>
+        <button id="btnClear" title="Clear the viewer (does not touch the file)">Clear</button>
+        <button id="btnOpenFile" title="Open log file in default editor">Open File</button>
+        <button id="btnReveal" title="Show log file in Explorer/Finder">Reveal</button>
+      </div>
+    </header>
+    <main id="logView" aria-live="polite"></main>
+
+    <!-- Logic lives in logs-viewer.js (external file). The previous inline
+         <script> block was blocked by the page's CSP `script-src 'self'`
+         directive, which is why the viewer appeared empty. -->
+    <script src="./logs-viewer.js"></script>
+    <script type="application/json" id="legacy-marker" data-disabled="true">DISABLED
+      (function () {
+        const api = window.llamaAPI;
+        const view = document.getElementById('logView');
+        const pathEl = document.getElementById('logPath');
+        const filterEl = document.getElementById('filter');
+        const btnAuto = document.getElementById('btnAutoscroll');
+        const btnClear = document.getElementById('btnClear');
+        const btnOpen = document.getElementById('btnOpenFile');
+        const btnReveal = document.getElementById('btnReveal');
+        const levelButtons = document.querySelectorAll('[data-level]');
+
+        let autoscroll = true;
+        let levelFilter = 'all'; // all | warn | error
+        let textFilter = '';
+        const MAX_LINES = 5000;
+
+        if (!api || !api.getInitialLogs) {
+          view.innerHTML = '<div class="placeholder">Log bridge unavailable. Preload failed to load.</div>';
+          return;
+        }
+
+        function classifyLine(line) {
+          // Log lines look like "[ISO] [source] [LEVEL] message" or
+          // "[ISO] [source] message"; fall back to scanning for keywords.
+          const upper = line.toUpperCase();
+          if (/\[ERROR\]|\bERROR\b|\bFATAL\b|EXCEPTION/.test(upper)) return 'error';
+          if (/\[WARN\]|\bWARN(ING)?\b/.test(upper)) return 'warn';
+          return 'info';
+        }
+
+        function shouldShow(level) {
+          if (levelFilter === 'all') return true;
+          if (levelFilter === 'warn') return level === 'warn' || level === 'error';
+          if (levelFilter === 'error') return level === 'error';
+          return true;
+        }
+
+        function matchesText(text) {
+          if (!textFilter) return true;
+          return text.toLowerCase().indexOf(textFilter) !== -1;
+        }
+
+        function trimBuffer() {
+          while (view.childElementCount > MAX_LINES) {
+            view.removeChild(view.firstChild);
+          }
+        }
+
+        function appendChunk(chunk) {
+          if (!chunk) return;
+          const lines = String(chunk).split(/\r?\n/);
+          const frag = document.createDocumentFragment();
+          for (const raw of lines) {
+            if (!raw) continue;
+            const level = classifyLine(raw);
+            const div = document.createElement('div');
+            div.className = 'line ' + level;
+            div.dataset.level = level;
+            div.textContent = raw;
+            if (!shouldShow(level) || !matchesText(raw)) {
+              div.classList.add('hidden');
+            }
+            frag.appendChild(div);
+          }
+          view.appendChild(frag);
+          trimBuffer();
+          if (autoscroll) view.scrollTop = view.scrollHeight;
+        }
+
+        function applyFilters() {
+          const children = view.children;
+          for (let i = 0; i < children.length; i++) {
+            const el = children[i];
+            if (el.classList.contains('placeholder') || el.classList.contains('truncated-banner')) continue;
+            const visible = shouldShow(el.dataset.level) && matchesText(el.textContent);
+            el.classList.toggle('hidden', !visible);
+          }
+          if (autoscroll) view.scrollTop = view.scrollHeight;
+        }
+
+        // Wire toolbar ---------------------------------------------------
+        filterEl.addEventListener('input', () => {
+          textFilter = filterEl.value.trim().toLowerCase();
+          applyFilters();
+        });
+
+        levelButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            levelButtons.forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            levelFilter = btn.dataset.level;
+            applyFilters();
+          });
+        });
+
+        btnAuto.addEventListener('click', () => {
+          autoscroll = !autoscroll;
+          btnAuto.classList.toggle('active', autoscroll);
+          if (autoscroll) view.scrollTop = view.scrollHeight;
+        });
+
+        // Disable auto-scroll when the user scrolls up manually.
+        view.addEventListener('scroll', () => {
+          const atBottom = view.scrollHeight - view.scrollTop - view.clientHeight < 24;
+          if (!atBottom && autoscroll) {
+            autoscroll = false;
+            btnAuto.classList.remove('active');
+          } else if (atBottom && !autoscroll) {
+            autoscroll = true;
+            btnAuto.classList.add('active');
+          }
+        });
+
+        btnClear.addEventListener('click', () => {
+          view.innerHTML = '';
+        });
+
+        btnOpen.addEventListener('click', () => { api.openLogFile?.(); });
+        btnReveal.addEventListener('click', () => { api.revealLogInFolder?.(); });
+
+        // Hydrate + subscribe -------------------------------------------
+        api.getInitialLogs().then((result) => {
+          if (!result) return;
+          pathEl.textContent = result.path || '';
+          pathEl.title = result.path || '';
+          if (result.error) {
+            view.innerHTML = '<div class="placeholder">Could not read log file: ' + result.error + '</div>';
+            return;
+          }
+          if (result.truncated) {
+            const banner = document.createElement('div');
+            banner.className = 'truncated-banner';
+            banner.textContent = 'Showing the last 256 KB of the log file. Open the file or reveal it in your file manager to see earlier entries.';
+            view.appendChild(banner);
+          }
+          appendChunk(result.content || '');
+          if (!result.content) {
+            const p = document.createElement('div');
+            p.className = 'placeholder';
+            p.textContent = 'Waiting for service output…';
+            view.appendChild(p);
+          }
+        });
+
+        const handler = (chunk) => appendChunk(chunk);
+        api.onLogAppend?.(handler);
+        window.addEventListener('beforeunload', () => {
+          api.offLogAppend?.(handler);
+        });
+      })();
+    </script>
+  </body>
+</html>

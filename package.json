@@ -1,0 +1,34 @@
+{
+  "name": "alpaca-monorepo",
+  "version": "1.0.0",
+  "description": "Alpaca - Local AI Chat & Development Platform with Bonsai model support",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:webui && npm run build:docs && npm run build:desktop",
+    "build:webui": "cd webui && npm run build",
+    "build:docs": "cd docs && npm run build",
+    "build:desktop": "cd desktop && npm run build",
+    "build:tui": "cd tui && cargo build --release",
+    "build:installer": "npm run build:webui && npm run build:docs && cd desktop && npm run build:installer",
+    "build:portable": "npm run build:webui && npm run build:docs && cd desktop && npm run build:portable",
+    "build:windows": "npm run build:webui && npm run build:docs && cd desktop && npm run build:win",
+    "build:mac": "npm run build:webui && npm run build:docs && cd desktop && npm run build:mac",
+    "build:linux": "npm run build:webui && npm run build:docs && cd desktop && npm run build:linux",
+    "build:dmg": "npm run build:webui && npm run build:docs && cd desktop && npm run build:dmg",
+    "build:pkg": "npm run build:webui && npm run build:docs && cd desktop && npm run build:pkg",
+    "build:appimage": "npm run build:webui && npm run build:docs && cd desktop && npm run build:appimage",
+    "build:deb": "npm run build:webui && npm run build:docs && cd desktop && npm run build:deb",
+    "build:rpm": "npm run build:webui && npm run build:docs && cd desktop && npm run build:rpm",
+    "build:snap": "npm run build:webui && npm run build:docs && cd desktop && npm run build:snap",
+    "dev:webui": "cd webui && npm run dev",
+    "dev:docs": "cd docs && npm run start",
+    "start": "cd desktop && npm start",
+    "clean": "cd webui && npm run cleanup 2>nul || true && cd ../desktop && rm -rf release 2>nul || true && cd ../docs && rm -rf build .docusaurus 2>nul || true",
+    "lint": "cd webui && npm run lint",
+    "format": "cd webui && npm run format"
+  },
+  "engines": {
+    "node": ">=18.0",
+    "npm": ">=9.0"
+  }
+}

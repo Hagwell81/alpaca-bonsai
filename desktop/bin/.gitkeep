@@ -1,0 +1,2 @@
+# This directory holds bundled jcodemunch-mcp binaries.
+# Contents are ignored by .gitignore — binaries are built locally via `npm run build:jcm`.

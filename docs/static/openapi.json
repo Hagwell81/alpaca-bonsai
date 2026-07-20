@@ -1,0 +1,524 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Alpaca API",
+    "description": "OpenAI-compatible REST API provided by the local llama.cpp server. Base URL is `http://localhost:13434/v1` when the server is running.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Alpaca",
+      "url": "https://github.com/Hagwell81/alpaca-bonsai"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:13434/v1",
+      "description": "Local llama.cpp server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Returns the health status of the llama.cpp server.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "summary": "List Models",
+        "description": "Lists all available models loaded by the server.",
+        "operationId": "listModels",
+        "responses": {
+          "200": {
+            "description": "List of models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{model_id}": {
+      "get": {
+        "summary": "Retrieve Model",
+        "description": "Gets information about a specific model.",
+        "operationId": "getModel",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the model to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Model"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found"
+          }
+        }
+      }
+    },
+    "/chat/completions": {
+      "post": {
+        "summary": "Chat Completions",
+        "description": "Creates a model response for the given chat conversation. Supports streaming via Server-Sent Events (SSE).",
+        "operationId": "createChatCompletion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat completion response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key"
+          }
+        }
+      }
+    },
+    "/completions": {
+      "post": {
+        "summary": "Completions (Legacy)",
+        "description": "Creates a completion for the provided prompt. Legacy endpoint; prefer `/chat/completions`.",
+        "operationId": "createCompletion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completion response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/embeddings": {
+      "post": {
+        "summary": "Create Embeddings",
+        "description": "Creates an embedding vector representing the input text.",
+        "operationId": "createEmbedding",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Embedding response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
+        }
+      },
+      "ModelList": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Model"
+            }
+          }
+        }
+      },
+      "Model": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "llama-3-8b"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "created": {
+            "type": "integer",
+            "example": 1704067200
+          },
+          "owned_by": {
+            "type": "string",
+            "example": "meta"
+          }
+        }
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "required": ["model", "messages"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "ID of the model to use",
+            "example": "llama-3"
+          },
+          "messages": {
+            "type": "array",
+            "description": "A list of messages comprising the conversation",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling temperature (0-2)",
+            "example": 0.7,
+            "minimum": 0,
+            "maximum": 2
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Maximum number of tokens to generate",
+            "example": 1000
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Nucleus sampling parameter",
+            "example": 1.0
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "If true, partial message deltas will be sent as SSE events",
+            "example": false
+          },
+          "stop": {
+            "type": "array",
+            "description": "Stop sequences",
+            "items": {
+              "type": "string"
+            }
+          },
+          "presence_penalty": {
+            "type": "number",
+            "example": 0.0
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "example": 0.0
+          },
+          "reasoning_format": {
+            "type": "string",
+            "enum": ["auto", "none", "deepseek"],
+            "description": "How reasoning/thinking content is formatted",
+            "example": "auto"
+          },
+          "dry_sequence_breakers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Strings that break sequences for DRY penalty"
+          },
+          "speculative.n_max": {
+            "type": "integer",
+            "description": "Max draft tokens for speculative decoding"
+          },
+          "speculative.n_min": {
+            "type": "integer",
+            "description": "Min draft tokens for speculative decoding"
+          },
+          "speculative.p_min": {
+            "type": "number",
+            "description": "Min probability threshold for accepting draft tokens"
+          },
+          "lora": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "scale": { "type": "number" }
+              }
+            },
+            "description": "LoRA adapter configurations"
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "required": ["role", "content"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["system", "user", "assistant"],
+            "example": "user"
+          },
+          "content": {
+            "type": "string",
+            "example": "Hello!"
+          }
+        }
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "chatcmpl-123"
+          },
+          "object": {
+            "type": "string",
+            "example": "chat.completion"
+          },
+          "created": {
+            "type": "integer",
+            "example": 1704067200
+          },
+          "model": {
+            "type": "string",
+            "example": "llama-3"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatChoice"
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        }
+      },
+      "ChatChoice": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "example": 0
+          },
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage"
+          },
+          "finish_reason": {
+            "type": "string",
+            "example": "stop"
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "prompt_tokens": {
+            "type": "integer",
+            "example": 20
+          },
+          "completion_tokens": {
+            "type": "integer",
+            "example": 10
+          },
+          "total_tokens": {
+            "type": "integer",
+            "example": 30
+          }
+        }
+      },
+      "CompletionRequest": {
+        "type": "object",
+        "required": ["model", "prompt"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "example": "llama-3"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Once upon a time"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "example": 100
+          },
+          "temperature": {
+            "type": "number",
+            "example": 0.7
+          },
+          "stream": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "CompletionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string",
+            "example": "text.completion"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "finish_reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        }
+      },
+      "EmbeddingRequest": {
+        "type": "object",
+        "required": ["model", "input"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "example": "llama-3"
+          },
+          "input": {
+            "type": "string",
+            "description": "Input text to embed",
+            "example": "Hello world"
+          }
+        }
+      },
+      "EmbeddingResponse": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "example": "embedding"
+                },
+                "embedding": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "The embedding vector"
+                },
+                "index": {
+                  "type": "integer",
+                  "example": 0
+                }
+              }
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key",
+        "description": "API key configured in Alpaca settings. Only required when `requireApiKey` is enabled."
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

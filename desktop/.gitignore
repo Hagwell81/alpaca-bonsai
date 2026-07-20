@@ -1,0 +1,3 @@
+# jcodemunch-mcp bundled binaries (built by `npm run build:jcm`)
+/bin/jcodemunch-mcp*
+!/.gitkeep

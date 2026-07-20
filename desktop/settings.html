@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>alpaca - Settings</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f5f6fa;
+      color: #333;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header .subtitle { opacity: 0.9; font-size: 14px; }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .section {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 15px 0;
+      color: #444;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-desc {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .info-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    .info-card .value {
+      font-size: 22px;
+      font-weight: 600;
+      color: #667eea;
+    }
+    .info-card .label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .search-box input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .search-box button {
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .search-box button:hover { background: #5568d3; }
+    .search-box button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .hf-token {
+      margin-bottom: 10px;
+    }
+    .hf-token input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .model-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .model-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .model-item:hover { background: #f8f9fa; }
+    .model-item:last-child { border-bottom: none; }
+    .model-info {
+      flex: 1;
+    }
+    .model-name {
+      font-weight: 500;
+      font-size: 14px;
+      color: #333;
+    }
+    .model-meta {
+      font-size: 12px;
+      color: #888;
+      margin-top: 3px;
+    }
+    .model-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5568d3; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #eee;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #667eea;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 11px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+    .repo-result {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    .repo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .repo-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .repo-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .tag {
+      background: #667eea;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+    .gguf-files {
+      margin-top: 10px;
+    }
+    .gguf-file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .gguf-file-info {
+      flex: 1;
+    }
+    .gguf-file-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .gguf-file-size {
+      font-size: 11px;
+      color: #888;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ddd;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .toast.info { background: #3498db; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .back-link {
+      color: white;
+      text-decoration: none;
+      opacity: 0.8;
+      font-size: 14px;
+    }
+    .back-link:hover { opacity: 1; }
+    .data-folder-path {
+      font-family: monospace;
+      font-size: 12px;
+      background: #f0f0f0;
+      padding: 8px 10px;
+      border-radius: 5px;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+    .badge-active {
+      display: inline-block;
+      background: #27ae60;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-vision {
+      display: inline-block;
+      background: #f39c12;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .model-item.is-active {
+      background: linear-gradient(90deg, rgba(39, 174, 96, 0.08), transparent);
+    }
+    button.btn-active-state {
+      background: #27ae60 !important;
+      cursor: default;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    /* Switch overlay */
+    .switch-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 15, 0.78);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      animation: fadeIn 0.2s ease;
+    }
+    .switch-overlay.visible { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .switch-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px 36px;
+      min-width: 360px;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .switch-card .big-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #eee;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
+    }
+    .switch-card h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      color: #333;
+    }
+    .switch-card .switch-filename {
+      font-family: monospace;
+      font-size: 13px;
+      color: #667eea;
+      word-break: break-all;
+      margin-bottom: 18px;
+    }
+    .switch-phases {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+      font-size: 13px;
+    }
+    .switch-phases li {
+      padding: 6px 0;
+      color: #999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .switch-phases li.done { color: #27ae60; }
+    .switch-phases li.current { color: #333; font-weight: 500; }
+    .switch-phases .pip {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      flex-shrink: 0;
+    }
+    .switch-phases li.done .pip { background: #27ae60; border-color: #27ae60; }
+    .switch-phases li.current .pip {
+      border-color: #667eea;
+      border-top-color: transparent;
+      animation: spin 0.9s linear infinite;
+    }
+    .switch-card .switch-error {
+      color: #e74c3c;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .switch-card .switch-close {
+      margin-top: 16px;
+      display: none;
+    }
+    
+    /* Telemetry UI Styles */
+    .subsection-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 12px;
+      margin-top: 15px;
+    }
+    .telemetry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .telemetry-table thead {
+      background: #f8f9fa;
+      border-bottom: 2px solid #ddd;
+    }
+    .telemetry-table th {
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
+      color: #555;
+    }
+    .telemetry-table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .telemetry-table tbody tr:hover {
+      background: #f8f9fa;
+    }
+    .telemetry-chart {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .chart-container {
+      display: flex;
+      gap: 10px;
+      height: 200px;
+    }
+    .chart-y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 60px;
+      font-size: 11px;
+      color: #888;
+      text-align: right;
+      padding-right: 5px;
+    }
+    .y-label {
+      height: 0;
+    }
+    .chart-area {
+      flex: 1;
+      position: relative;
+      border-left: 2px solid #ddd;
+      border-bottom: 2px solid #ddd;
+      background: white;
+    }
+    .grid-line {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      background: #eee;
+      left: 0;
+    }
+    .data-point {
+      position: absolute;
+      width: 2px;
+      background: linear-gradient(to top, #667eea, #764ba2);
+      bottom: 0;
+      border-radius: 1px;
+      cursor: pointer;
+      transition: width 0.2s;
+    }
+    .data-point:hover {
+      width: 4px;
+      background: linear-gradient(to top, #5568d3, #6a3f8f);
+    }
+    .warning-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 10px;
+    }
+    .warning-title {
+      font-weight: 600;
+      color: #856404;
+      margin-bottom: 10px;
+    }
+    .warning-content {
+      font-size: 13px;
+      color: #856404;
+    }
+    .warning-content p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>alpaca Settings</h1>
+      <div class="subtitle">Manage models, storage, and data</div>
+    </div>
+    <a href="#" class="back-link" onclick="goBack()">&larr; Back to Chat</a>
+  </div>
+
+  <div class="container">
+    <!-- Storage Overview -->
+    <div class="section">
+      <div class="section-title">Storage</div>
+      <div class="section-desc">Local data storage usage and location</div>
+      <div class="info-grid" id="storageGrid">
+        <div class="info-card">
+          <div class="value" id="totalSize">-</div>
+          <div class="label">Total Used</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="modelsSize">-</div>
+          <div class="label">Models</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="chatsSize">-</div>
+          <div class="label">Chat History</div>
+        </div>
+      </div>
+      <div class="data-folder-path" id="dataFolderPath">-</div>
+      <button class="btn-secondary btn-small" onclick="openDataFolder()">Open Data Folder</button>
+    </div>
+
+    <!-- Hardware & Backend -->
+    <div class="section">
+      <div class="section-title">Hardware &amp; Backend</div>
+      <div class="section-desc">Detected capabilities and llama.cpp backend management</div>
+      <div class="info-grid" id="hardwareGrid">
+        <div class="info-card">
+          <div class="value" id="hwBackend">-</div>
+          <div class="label">Backend</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="hwCuda">-</div>
+          <div class="label">CUDA</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="hwVulkan">-</div>
+          <div class="label">Vulkan</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="hwRocm">-</div>
+          <div class="label">ROCm</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button class="btn-secondary btn-small" onclick="refreshHardware()">Refresh Detection</button>
+        <button class="btn-primary btn-small" onclick="checkBackendUpdate()">Check for Updates</button>
+        <button class="btn-primary btn-small" onclick="downloadLatestBackend()">Download Latest Backend</button>
+      </div>
+      <div id="backendUpdateResult" style="font-size: 13px; color: #666; margin-bottom: 10px; display: none;"></div>
+      <div class="section-desc" style="margin-bottom: 8px; font-size: 13px;">Installed Backends</div>
+      <ul class="model-list" id="installedBackends">
+        <li class="empty-state">
+          <div class="icon">🔧</div>
+          <div>Loading backends...</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Installed Models -->
+    <div class="section">
+      <div class="section-title">Installed Models</div>
+      <div class="section-desc">Manage your downloaded GGUF models</div>
+      <ul class="model-list" id="installedModels">
+        <li class="empty-state">
+          <div class="icon">📦</div>
+          <div>Loading models...</div>
+        </li>
+      </ul>
+      <div style="display: flex; gap: 10px; margin-top: 12px;">
+        <button class="btn-secondary btn-small" style="flex: 1;" onclick="importLocalModel()" title="Import a local GGUF file into the models folder">
+          📁 Import Local Model
+        </button>
+        <button class="btn-secondary btn-small" style="flex: 1;" onclick="importVisionModel()" title="Import a vision model (GGUF + mmproj file pair)">
+          👁 Import Vision Model
+        </button>
+      </div>
+    </div>
+
+    <!--
+      Memory tuning (per-model panel extension - phase 2: llama-cpp-memory-tuning)
+
+      This section is additive to the phase-1 per-model settings panel. Task 12.1
+      ships the static HTML skeleton with stable element IDs so that task 12.2
+      (settings.js binding) and JSDOM tests can attach to deterministic hooks.
+
+      Render order (Req 10.1):
+        1. nGpuLayers slider + "Auto" toggle
+        2. "Fit to VRAM" button
+        3. typeK dropdown (seven KV-cache precisions)
+        4. typeV dropdown (seven KV-cache precisions)
+        5. threads numeric input + "Use physical core count" button
+        6. nCpuMoe numeric input
+        7. visibleDevices multi-select
+        8. Live estimate label
+
+      Binding, conditional visibility, draft state, validation, and the
+      "Fit to VRAM" click handler are the responsibility of subsequent
+      tasks (12.2 - 12.5); do NOT add behaviour in this file.
+    -->
+    <div class="section" id="model-memory-panel" data-phase="memory-tuning" hidden>
+      <div class="section-title">Memory</div>
+      <div class="section-desc">
+        Per-model memory tuning (GPU layers, KV-cache precision, thread count,
+        MoE CPU offload, and GPU pinning).
+      </div>
+
+      <!-- Currently-selected model filename (bound by settings.js in task 12.2) -->
+      <div id="memory-target-filename"
+           style="font-family: monospace; font-size: 12px; color: #667eea; margin-bottom: 15px; word-break: break-all;"></div>
+
+      <!-- 1. nGpuLayers slider + "Auto" toggle (Req 1.6, 10.1) -->
+      <div class="memory-field" data-field="nGpuLayers" style="margin-bottom: 20px;">
+        <label for="memory-ngl-slider" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          GPU layers
+          <span id="memory-ngl-value" style="font-family: monospace; color: #667eea; margin-left: 8px;">-</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range"
+                 id="memory-ngl-slider"
+                 min="0"
+                 max="999"
+                 step="1"
+                 value="0"
+                 style="flex: 1;">
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #555;">
+            <input type="checkbox" id="memory-ngl-auto">
+            Auto
+          </label>
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 4px;">
+          Number of transformer layers offloaded to GPU. "Auto" lets llama-server decide (stored as -1).
+        </div>
+      </div>
+
+      <!-- 2. "Fit to VRAM" button (Req 7.7, 10.2) -->
+      <div class="memory-field" data-field="fitToVram" style="margin-bottom: 20px;">
+        <button type="button"
+                id="memory-fit-vram-btn"
+                class="btn-primary btn-small"
+                title="Pick the largest GPU-layer count that fits the current VRAM budget">
+          Fit to VRAM
+        </button>
+        <span id="memory-fit-vram-result"
+              style="margin-left: 12px; font-size: 12px; color: #555;"></span>
+      </div>
+
+      <!-- 3. typeK dropdown (Req 2.5, 10.1) -->
+      <div class="memory-field" data-field="typeK" style="margin-bottom: 20px;">
+        <label for="memory-typek-select" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          KV cache K precision (--type-k)
+        </label>
+        <select id="memory-typek-select">
+          <option value="f32">f32</option>
+          <option value="f16" selected>f16</option>
+          <option value="q8_0">q8_0</option>
+          <option value="q5_1">q5_1</option>
+          <option value="q5_0">q5_0</option>
+          <option value="q4_1">q4_1</option>
+          <option value="q4_0">q4_0</option>
+          <!-- TurboQuant types (shown only when backend supports them) -->
+          <option value="turbo4_0" class="turboquant-option" style="display:none;">turbo4_0 (4-bit, 3.8x)</option>
+          <option value="turbo3_0" class="turboquant-option" style="display:none;">turbo3_0 (3-bit, 4.9x)</option>
+          <option value="turbo2_0" class="turboquant-option" style="display:none;">turbo2_0 (2-bit, 6.4x)</option>
+        </select>
+      </div>
+
+      <!-- 4. typeV dropdown (Req 2.5, 10.1) -->
+      <div class="memory-field" data-field="typeV" style="margin-bottom: 20px;">
+        <label for="memory-typev-select" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          KV cache V precision (--type-v)
+        </label>
+        <select id="memory-typev-select">
+          <option value="f32">f32</option>
+          <option value="f16" selected>f16</option>
+          <option value="q8_0">q8_0</option>
+          <option value="q5_1">q5_1</option>
+          <option value="q5_0">q5_0</option>
+          <option value="q4_1">q4_1</option>
+          <option value="q4_0">q4_0</option>
+          <!-- TurboQuant types (shown only when backend supports them) -->
+          <option value="turbo4_0" class="turboquant-option" style="display:none;">turbo4_0 (4-bit, 3.8x)</option>
+          <option value="turbo3_0" class="turboquant-option" style="display:none;">turbo3_0 (3-bit, 4.9x)</option>
+          <option value="turbo2_0" class="turboquant-option" style="display:none;">turbo2_0 (2-bit, 6.4x)</option>
+        </select>
+      </div>
+
+      <!-- 5. threads numeric input + "Use physical core count" button (Req 4.5, 10.1) -->
+      <div class="memory-field" data-field="threads" style="margin-bottom: 20px;">
+        <label for="memory-threads-input" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          Threads (-t)
+        </label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="number"
+                 id="memory-threads-input"
+                 min="1"
+                 max="256"
+                 step="1"
+                 value="4"
+                 style="width: 120px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px;">
+          <button type="button"
+                  id="memory-threads-physical-btn"
+                  class="btn-secondary btn-small">
+            Use physical core count
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. nCpuMoe numeric input (Req 3.5, 10.1) -->
+      <div class="memory-field" data-field="nCpuMoe" style="margin-bottom: 20px;">
+        <label for="memory-ncpumoe-input" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          MoE expert layers on CPU (--n-cpu-moe)
+        </label>
+        <input type="number"
+               id="memory-ncpumoe-input"
+               min="0"
+               max="999"
+               step="1"
+               value="0"
+               style="width: 120px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px;">
+        <div style="font-size: 12px; color: #888; margin-top: 4px;">
+          Number of MoE expert layers kept on CPU. Only applies to Mixture-of-Experts models; hidden for dense models.
+        </div>
+      </div>
+
+      <!-- 6b. Speculative decoding mode + params (Phase 3) -->
+      <div class="memory-field" data-field="speculative" style="margin-bottom: 20px;">
+        <label style="display: block; font-weight: 500; margin-bottom: 6px;">
+          Speculative decoding mode
+        </label>
+        <select id="memory-speculative-mode">
+          <option value="off" selected>Off</option>
+          <option value="draft-model">External draft model</option>
+          <option value="mtp">MTP (model-native multi-token prediction)</option>
+          <option value="eagle3">Eagle3</option>
+          <option value="ngram">N-gram cache</option>
+          <option value="ngram-simple">N-gram simple</option>
+        </select>
+
+        <div id="memory-speculative-params" style="display: none; margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 12px; color: #555;">Max draft tokens (--speculative-n-max)</label>
+            <input type="number" id="memory-speculative-nmax" min="1" max="32" value="16"
+                   style="width: 80px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; margin-left: 8px;">
+          </div>
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 12px; color: #555;">Min draft tokens (--speculative-n-min)</label>
+            <input type="number" id="memory-speculative-nmin" min="1" max="32" value="4"
+                   style="width: 80px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; margin-left: 8px;">
+          </div>
+          <div>
+            <label style="font-size: 12px; color: #555;">Min acceptance probability (--speculative-p-min)</label>
+            <input type="number" id="memory-speculative-pmin" min="0" max="1" step="0.05" value="0.8"
+                   style="width: 80px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; margin-left: 8px;">
+          </div>
+        </div>
+
+        <div id="memory-speculative-draftmodel" style="display: none; margin-top: 12px;">
+          <label style="font-size: 12px; color: #555;">Draft model path (-md)</label>
+          <input type="text" id="memory-speculative-draft-path" placeholder="/path/to/draft-model.gguf"
+                 style="width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; margin-top: 4px;">
+        </div>
+      </div>
+
+      <!-- 7. visibleDevices multi-select (Req 5.5, 10.1) -->
+      <div class="memory-field" data-field="visibleDevices" style="margin-bottom: 20px;">
+        <label for="memory-visible-devices" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          Visible GPU devices (CUDA_VISIBLE_DEVICES)
+        </label>
+        <select id="memory-visible-devices" multiple size="4"
+                style="min-width: 200px; padding: 6px; border: 1px solid #ddd; border-radius: 5px;">
+        </select>
+        <div id="memory-visible-devices-hint"
+             style="font-size: 12px; color: #888; margin-top: 4px;">
+          Select one or more GPU indices to pin this slot to. Leave empty to inherit the process default.
+        </div>
+      </div>
+
+      <!-- 8. Live estimate label (Req 10.5) -->
+      <div class="memory-field" data-field="estimate" style="margin-top: 10px; padding: 10px 12px; background: #f0f4ff; border-left: 3px solid #667eea; border-radius: 4px;">
+        <strong>Estimated VRAM:</strong>
+        <span id="memory-estimate-label" style="font-family: monospace; color: #667eea;">-</span>
+      </div>
+
+      <!-- Validator error surface (Req 10.3; populated by task 12.5) -->
+      <div id="memory-validation-error"
+           style="display: none; margin-top: 12px; padding: 10px 12px; background: #fdecea; border: 1px solid #e74c3c; border-radius: 5px; color: #c0392b; font-size: 13px;"></div>
+    </div>
+
+    <!-- HuggingFace Model Search -->
+    <div class="section">
+      <div class="section-title">HuggingFace Model Hub</div>
+      <div class="section-desc">Search and install GGUF models directly from HuggingFace</div>
+
+      <div class="hf-token">
+        <input type="password" id="hfToken" placeholder="HuggingFace Token (optional - for gated/private repos)">
+        <div id="hfTokenStatus" style="font-size: 12px; color: #666; margin-top: 4px;"></div>
+        <!-- Token expiration warning -->
+        <div id="hfTokenExpirationWarning" style="display: none; margin-top: 8px; padding: 10px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">
+          <span id="hfTokenExpirationText"></span>
+        </div>
+        <!-- Token refresh button -->
+        <div id="hfTokenActions" style="display: flex; gap: 8px; margin-top: 8px;"></div>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="repoSearch" placeholder="Search repo: author/model-name (e.g., unsloth/Llama-3.2-1B-Instruct-GGUF)">
+        <button id="searchBtn" onclick="searchHuggingFace()">Search</button>
+      </div>
+
+      <div style="background: #fff8e1; border: 1px solid #ffc107; border-radius: 6px; padding: 12px 16px; margin: 12px 0 8px; font-size: 13px; color: #5d4037; line-height: 1.6;">
+        <strong>Download times vary by model size and internet speed.</strong><br>
+        <strong>Large models (&gt;10 GB):</strong> 30-60+ minutes.<br>
+        <strong>Medium models (5-10 GB):</strong> 10-30+ minutes.<br>
+        <strong>Small models (&lt;5 GB):</strong> 5-10+ minutes.<br>
+        <em>Please remain on this settings page until the download completes.</em>
+      </div>
+
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- Startup Telemetry -->
+    <div class="section">
+      <div class="section-title">Startup Telemetry</div>
+      <div class="section-desc">Monitor and analyze application startup performance</div>
+      
+      <!-- Overall Statistics -->
+      <div class="subsection-title">Overall Statistics</div>
+      <div id="telemetryOverallStats">
+        <p>Loading telemetry data...</p>
+      </div>
+      
+      <!-- Slow Startup Warning -->
+      <div id="telemetrySlowWarning" style="margin-top: 20px;"></div>
+      
+      <!-- Per-Stage Metrics -->
+      <div class="subsection-title" style="margin-top: 25px;">Per-Stage Metrics</div>
+      <div id="telemetryPerStageMetrics">
+        <p>Loading stage metrics...</p>
+      </div>
+      
+      <!-- Trend Chart -->
+      <div class="subsection-title" style="margin-top: 25px;">30-Day Trend</div>
+      <div id="telemetryTrendChart">
+        <p>Loading trend data...</p>
+      </div>
+      
+      <!-- Actions -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+        <button class="btn-secondary btn-small" onclick="refreshTelemetryData()">Refresh Data</button>
+        <button class="btn-secondary btn-small" onclick="exportTelemetryData()">Export as JSON</button>
+        <button class="btn-secondary btn-small" onclick="clearTelemetryData()">Clear Data</button>
+      </div>
+    </div>
+
+    <!-- Developer -->
+    <div class="section">
+      <div class="section-title">Developer</div>
+      <div class="section-desc">API endpoints and documentation for developers</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="value" id="apiEndpoint">-</div>
+          <div class="label">API Base URL</div>
+        </div>
+        <div class="info-card">
+          <div class="value" id="apiStatus">-</div>
+          <div class="label">API Status</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn-primary btn-small" onclick="openApiExplorer()">Open API Explorer (Swagger UI)</button>
+        <button class="btn-secondary btn-small" onclick="copyApiEndpoint()">Copy Endpoint</button>
+        <button class="btn-secondary btn-small" onclick="openDocs()">Open Documentation</button>
+      </div>
+    </div>
+
+    <!-- Scheduler Settings -->
+    <div class="section" id="scheduler-settings">
+      <div class="section-title">Model Lifecycle</div>
+      <div class="section-desc">Configure how many models stay loaded in memory and how long they persist between requests</div>
+
+      <div style="margin-bottom: 20px;">
+        <label for="scheduler-max-loaded" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          Max Loaded Models
+        </label>
+        <select id="scheduler-max-loaded" style="padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; min-width: 120px;">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <div style="font-size: 12px; color: #888; margin-top: 4px;">
+          Maximum number of models kept loaded simultaneously. Higher values enable faster switching but use more VRAM.
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label for="scheduler-keep-alive" style="display: block; font-weight: 500; margin-bottom: 6px;">
+          Keep-Alive Duration
+        </label>
+        <select id="scheduler-keep-alive" style="padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; min-width: 200px;">
+          <option value="60000">1 minute</option>
+          <option value="300000" selected>5 minutes</option>
+          <option value="900000">15 minutes</option>
+          <option value="1800000">30 minutes</option>
+          <option value="Infinity">Indefinite</option>
+        </select>
+        <div style="font-size: 12px; color: #888; margin-top: 4px;">
+          How long a model stays loaded after the last request completes. "Indefinite" keeps models loaded until VRAM pressure forces eviction.
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn-primary btn-small" onclick="saveSchedulerSettings()">Save</button>
+        <button class="btn-secondary btn-small" onclick="resetSchedulerSettings()">Reset to Defaults</button>
+      </div>
+
+      <div id="scheduler-status" style="margin-top: 12px; font-size: 12px; color: #667eea;"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- Settings module for HF token management -->
+  <script src="settings.js"></script>
+  
+  <!-- Telemetry UI module -->
+  <script src="telemetry-ui.js"></script>
+
+  <!-- Model switch overlay -->
+  <div class="switch-overlay" id="switchOverlay" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
+    <div class="switch-card">
+      <div class="big-spinner" id="switchSpinner"></div>
+      <h2 id="switchTitle">Switching model</h2>
+      <div class="switch-filename" id="switchFilename"></div>
+      <ul class="switch-phases" id="switchPhases" aria-live="polite">
+        <li data-phase="stopping"><span class="pip"></span><span>Stopping current server</span></li>
+        <li data-phase="starting"><span class="pip"></span><span>Starting server with new model</span></li>
+        <li data-phase="waiting-ready"><span class="pip"></span><span>Loading model into memory</span></li>
+        <li data-phase="ready"><span class="pip"></span><span>Ready</span></li>
+      </ul>
+      <div class="switch-error" id="switchError" style="display:none;"></div>
+      <button class="btn-secondary btn-small switch-close" id="switchCloseBtn">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Storage ---
+    async function loadStorageInfo() {
+      try {
+        const info = await window.llamaAPI.getStorageInfo();
+        document.getElementById('totalSize').textContent = formatBytes(info.totalSize);
+        document.getElementById('modelsSize').textContent = formatBytes(info.modelsSize);
+        document.getElementById('chatsSize').textContent = formatBytes(info.chatsSize);
+        document.getElementById('dataFolderPath').textContent = info.appDataDir;
+      } catch (e) {
+        console.error('Failed to load storage info:', e);
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log2(bytes) / 10);
+      return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+    }
+
+    async function openDataFolder() {
+      await window.llamaAPI.openDataFolder();
+    }
+
+    // --- Hardware & Backend ---
+    async function loadHardwareInfo() {
+      try {
+        const hw = await window.llamaAPI.getHardwareInfo();
+        if (!hw) {
+          document.getElementById('hwBackend').textContent = 'Unknown';
+          document.getElementById('hwCuda').textContent = '?';
+          document.getElementById('hwVulkan').textContent = '?';
+          document.getElementById('hwRocm').textContent = '?';
+          return;
+        }
+        const caps = hw.capabilities || hw;
+        document.getElementById('hwBackend').textContent = hw.backend || caps.backend || 'CPU';
+        document.getElementById('hwCuda').textContent = caps.cuda ? 'Yes' : 'No';
+        document.getElementById('hwVulkan').textContent = caps.vulkan ? 'Yes' : 'No';
+        document.getElementById('hwRocm').textContent = caps.rocm ? 'Yes' : 'No';
+      } catch (e) {
+        console.error('Failed to load hardware info:', e);
+      }
+    }
+
+    async function refreshHardware() {
+      try {
+        if (!window.llamaAPI || !window.llamaAPI.refreshHardwareDetection) {
+          showToast('Hardware refresh not available', 'error');
+          return;
+        }
+        showToast('Refreshing hardware detection...', 'info');
+        await window.llamaAPI.refreshHardwareDetection();
+        await loadHardwareInfo();
+        showToast('Hardware detection refreshed', 'success');
+      } catch (e) {
+        showToast('Failed to refresh hardware detection', 'error');
+      }
+    }
+
+    async function loadInstalledBackends() {
+      try {
+        if (!window.llamaAPI || !window.llamaAPI.getInstalledBackends) {
+          const list = document.getElementById('installedBackends');
+          list.innerHTML = '<li class="empty-state"><div class="icon">🔧</div><div>Backend manager not available</div></li>';
+          return;
+        }
+        const backends = await window.llamaAPI.getInstalledBackends();
+        const list = document.getElementById('installedBackends');
+        if (!backends || backends.length === 0) {
+          list.innerHTML = '<li class="empty-state"><div class="icon">🔧</div><div>No backends installed yet</div><div style="font-size:12px;margin-top:5px;">Use Download Latest Backend to install</div></li>';
+          return;
+        }
+        list.innerHTML = '';
+        for (const b of backends) {
+          const li = document.createElement('li');
+          li.className = 'model-item';
+          li.innerHTML = `
+            <div class="model-info">
+              <div class="model-name">${escapeHtml(b.backend)} <span style="font-size:11px;color:#888;">${escapeHtml(b.version)}</span></div>
+              <div class="model-meta">${b.installed ? 'Installed' : 'Incomplete'} · ${escapeHtml(b.path)}</div>
+            </div>
+            <div class="model-actions">
+              <span class="badge-active" style="background:${b.installed ? '#27ae60' : '#e74c3c'};">${b.installed ? 'Ready' : 'Missing'}</span>
+            </div>
+          `;
+          list.appendChild(li);
+        }
+      } catch (e) {
+        console.error('Failed to load backends:', e);
+      }
+    }
+
+    async function checkBackendUpdate() {
+      try {
+        if (!window.llamaAPI || !window.llamaAPI.checkForBackendUpdate) {
+          showToast('Backend update check not available', 'error');
+          return;
+        }
+        showToast('Checking for backend updates...', 'info');
+        const result = await window.llamaAPI.checkForBackendUpdate();
+        const el = document.getElementById('backendUpdateResult');
+        if (result.success) {
+          el.textContent = `Latest release: ${result.tag} (source: ${result.source})`;
+          el.style.display = 'block';
+          showToast(`Latest backend: ${result.tag}`, 'success');
+        } else {
+          el.textContent = `Error: ${result.error}`;
+          el.style.display = 'block';
+          showToast(`Update check failed: ${result.error}`, 'error');
+        }
+      } catch (e) {
+        showToast('Failed to check for updates', 'error');
+      }
+    }
+
+    async function downloadLatestBackend() {
+      try {
+        if (!window.llamaAPI || !window.llamaAPI.downloadBackend) {
+          showToast('Backend download not available', 'error');
+          return;
+        }
+        showToast('Downloading latest backend... (see console for progress)', 'info');
+        const result = await window.llamaAPI.downloadBackend();
+        if (result.success) {
+          showToast(`Backend ready: ${result.backend}@${result.tag}`, 'success');
+          loadInstalledBackends();
+        } else {
+          showToast(`Backend download failed: ${result.error}`, 'error');
+        }
+      } catch (e) {
+        showToast('Failed to download backend', 'error');
+      }
+    }
+
+    // --- Installed Models ---
+    let activeModelFilename = null;
+    let switchInProgress = false;
+
+    function setActionsDisabled(disabled) {
+      document.querySelectorAll('#installedModels button[data-action]').forEach((btn) => {
+        // Active model's switch button stays disabled regardless
+        if (btn.dataset.action === 'switch' && btn.dataset.filename === activeModelFilename) {
+          btn.disabled = true;
+        } else {
+          btn.disabled = disabled;
+        }
+      });
+    }
+
+    function renderModelRow(m) {
+      const isActive = m.filename === activeModelFilename;
+      const li = document.createElement('li');
+      li.className = 'model-item' + (isActive ? ' is-active' : '');
+      li.dataset.filename = m.filename;
+
+      const info = document.createElement('div');
+      info.className = 'model-info';
+      const name = document.createElement('div');
+      name.className = 'model-name';
+      name.textContent = m.filename;
+      if (isActive) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-active';
+        badge.textContent = 'Active';
+        name.appendChild(badge);
+      }
+      if (m.hasMmproj) {
+        const visionBadge = document.createElement('span');
+        visionBadge.className = 'badge-vision';
+        visionBadge.textContent = 'Vision';
+        visionBadge.title = 'Vision model (mmproj: ' + (m.mmprojFiles?.join(', ') || 'available') + ')';
+        name.appendChild(visionBadge);
+      }
+      const meta = document.createElement('div');
+      meta.className = 'model-meta';
+      meta.textContent = `${m.sizeFormatted} \u00b7 ${new Date(m.modified).toLocaleString()}`;
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'model-actions';
+      const switchBtn = document.createElement('button');
+      switchBtn.className = 'btn-primary btn-small' + (isActive ? ' btn-active-state' : '');
+      switchBtn.dataset.action = 'switch';
+      switchBtn.dataset.filename = m.filename;
+      switchBtn.textContent = isActive ? 'Active' : 'Switch';
+      switchBtn.disabled = isActive || switchInProgress;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger btn-small';
+      delBtn.dataset.action = 'delete';
+      delBtn.dataset.filename = m.filename;
+      delBtn.textContent = 'Delete';
+      delBtn.disabled = switchInProgress;
+      actions.appendChild(switchBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(info);
+      li.appendChild(actions);
+      return li;
+    }
+
+    async function loadInstalledModels() {
+      try {
+        const [models, active] = await Promise.all([
+          window.llamaAPI.getInstalledModels(),
+          window.llamaAPI.getActiveModel ? window.llamaAPI.getActiveModel() : Promise.resolve(null),
+        ]);
+        activeModelFilename = active;
+        const list = document.getElementById('installedModels');
+        if (!models || models.length === 0) {
+          list.replaceChildren();
+          const empty = document.createElement('li');
+          empty.className = 'empty-state';
+          empty.innerHTML = `
+            <div class="icon">📦</div>
+            <div>No models installed yet</div>
+            <div style="font-size: 12px; margin-top: 5px;">Use the HuggingFace Hub below to search and install models</div>`;
+          list.appendChild(empty);
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        for (const m of models) fragment.appendChild(renderModelRow(m));
+        list.replaceChildren(fragment);
+      } catch (e) {
+        console.error('Failed to load models:', e);
+      }
+    }
+
+    // Delegated click handler — replaces unsafe inline onclick attributes that
+    // previously embedded user-controlled filenames into HTML strings.
+    document.getElementById('installedModels').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn || btn.disabled) return;
+      const filename = btn.dataset.filename;
+      if (btn.dataset.action === 'switch') activateModel(filename);
+      else if (btn.dataset.action === 'delete') deleteModel(filename);
+    });
+
+    async function activateModel(filename) {
+      if (!window.llamaAPI || !window.llamaAPI.switchModel) {
+        showToast('Model switching is not available', 'error');
+        return;
+      }
+      if (switchInProgress) return;
+      if (filename === activeModelFilename) return;
+
+      switchInProgress = true;
+      setActionsDisabled(true);
+      openSwitchOverlay(filename);
+
+      try {
+        const result = await window.llamaAPI.switchModel(filename);
+        if (result?.success) {
+          activeModelFilename = filename;
+          markSwitchPhase('ready');
+          finishSwitchOverlay(null);
+          showToast(`Switched to ${filename}`, 'success');
+        } else {
+          finishSwitchOverlay(result?.error || 'Unknown error');
+          showToast(`Switch failed: ${result?.error || 'Unknown error'}`, 'error');
+        }
+      } catch (e) {
+        finishSwitchOverlay(e.message || 'Unknown error');
+        showToast(`Switch failed: ${e.message || 'Unknown error'}`, 'error');
+      } finally {
+        switchInProgress = false;
+        // Re-render to update Active badge / button states
+        loadInstalledModels();
+      }
+    }
+
+    async function deleteModel(filename) {
+      if (switchInProgress) return;
+      if (!confirm(`Delete ${filename}? This cannot be undone.`)) return;
+      try {
+        await window.llamaAPI.deleteModel(filename);
+        showToast('Model deleted', 'success');
+        loadInstalledModels();
+        loadStorageInfo();
+      } catch (e) {
+        showToast('Failed to delete model', 'error');
+      }
+    }
+
+    // --- Switch overlay control ---
+    const PHASE_ORDER = ['stopping', 'starting', 'waiting-ready', 'ready'];
+
+    function openSwitchOverlay(filename) {
+      const overlay = document.getElementById('switchOverlay');
+      document.getElementById('switchFilename').textContent = filename;
+      document.getElementById('switchError').style.display = 'none';
+      document.getElementById('switchCloseBtn').style.display = 'none';
+      document.getElementById('switchSpinner').style.display = 'block';
+      document.getElementById('switchTitle').textContent = 'Switching model';
+      // Reset phase pips
+      document.querySelectorAll('#switchPhases li').forEach((li) => {
+        li.classList.remove('done', 'current');
+      });
+      overlay.classList.add('visible');
+    }
+
+    function markSwitchPhase(phase) {
+      const idx = PHASE_ORDER.indexOf(phase);
+      if (idx === -1) return;
+      document.querySelectorAll('#switchPhases li').forEach((li) => {
+        const liIdx = PHASE_ORDER.indexOf(li.dataset.phase);
+        li.classList.remove('done', 'current');
+        if (liIdx < idx) li.classList.add('done');
+        else if (liIdx === idx) li.classList.add(phase === 'ready' ? 'done' : 'current');
+      });
+    }
+
+    function finishSwitchOverlay(errorMessage) {
+      document.getElementById('switchSpinner').style.display = 'none';
+      document.getElementById('switchCloseBtn').style.display = 'inline-block';
+      if (errorMessage) {
+        document.getElementById('switchTitle').textContent = 'Switch failed';
+        const errEl = document.getElementById('switchError');
+        errEl.textContent = errorMessage;
+        errEl.style.display = 'block';
+      } else {
+        document.getElementById('switchTitle').textContent = 'Model ready';
+        // Auto-dismiss after a short delay on success
+        setTimeout(() => {
+          document.getElementById('switchOverlay').classList.remove('visible');
+        }, 900);
+      }
+    }
+
+    document.getElementById('switchCloseBtn').addEventListener('click', () => {
+      document.getElementById('switchOverlay').classList.remove('visible');
+    });
+
+    // --- HuggingFace Search ---
+    let currentSearch = null;
+
+    async function searchHuggingFace() {
+      const repoId = document.getElementById('repoSearch').value.trim();
+      const hfToken = document.getElementById('hfToken').value.trim();
+      const btn = document.getElementById('searchBtn');
+      const results = document.getElementById('searchResults');
+
+      if (!repoId) {
+        showToast('Please enter a repository ID', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Searching...';
+      results.innerHTML = '';
+
+      try {
+        const data = await window.llamaAPI.searchHuggingFace(repoId, hfToken || undefined);
+        currentSearch = data;
+
+        if (data.error) {
+          results.innerHTML = `<div style="color: #e74c3c; padding: 10px;">Error: ${escapeHtml(data.error)}</div>`;
+          return;
+        }
+
+        if (!data.ggufFiles || data.ggufFiles.length === 0) {
+          results.innerHTML = `
+            <div class="repo-result">
+              <div class="repo-title">${escapeHtml(data.repoId)}</div>
+              <div style="color: #888; font-size: 13px;">No GGUF files found in this repository</div>
+              <div class="repo-tags">${(data.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+            </div>`;
+          return;
+        }
+
+        renderHfSearchResults(data);
+      } catch (e) {
+        showToast('Search failed: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Search';
+      }
+    }
+
+    // Build the HF search results panel using DOM APIs so user-controlled
+    // filenames/repoIds can never break out of attribute context.
+    function renderHfSearchResults(data) {
+      const results = document.getElementById('searchResults');
+      results.replaceChildren();
+
+      const repo = document.createElement('div');
+      repo.className = 'repo-result';
+
+      const header = document.createElement('div');
+      header.className = 'repo-header';
+      const headerInner = document.createElement('div');
+      const title = document.createElement('div');
+      title.className = 'repo-title';
+      title.textContent = data.repoId;
+      const downloads = document.createElement('div');
+      downloads.style.cssText = 'font-size: 12px; color: #888;';
+      downloads.textContent = `${data.downloads || 0} downloads`;
+      const tags = document.createElement('div');
+      tags.className = 'repo-tags';
+      for (const t of data.tags || []) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = t;
+        tags.appendChild(tag);
+      }
+      headerInner.appendChild(title);
+      headerInner.appendChild(downloads);
+      headerInner.appendChild(tags);
+      header.appendChild(headerInner);
+      repo.appendChild(header);
+
+      const filesWrap = document.createElement('div');
+      filesWrap.className = 'gguf-files';
+      const filesLabel = document.createElement('div');
+      filesLabel.style.cssText = 'font-size: 13px; font-weight: 500; margin-bottom: 8px;';
+      filesLabel.textContent = 'Available GGUF Files:';
+      filesWrap.appendChild(filesLabel);
+
+      for (const f of data.ggufFiles) {
+        const row = document.createElement('div');
+        row.className = 'gguf-file';
+        row.dataset.filename = f.filename;
+
+        const info = document.createElement('div');
+        info.className = 'gguf-file-info';
+        const name = document.createElement('div');
+        name.className = 'gguf-file-name';
+        name.textContent = f.filename;
+        const size = document.createElement('div');
+        size.className = 'gguf-file-size';
+        size.textContent = f.sizeFormatted || '';
+
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        progressBar.style.display = 'none';
+        progressBar.dataset.role = 'progress-bar';
+        const progressFill = document.createElement('div');
+        progressFill.className = 'progress-fill';
+        progressFill.style.width = '0%';
+        progressBar.appendChild(progressFill);
+
+        const progressText = document.createElement('div');
+        progressText.className = 'progress-text';
+        progressText.style.display = 'none';
+        progressText.dataset.role = 'progress-text';
+
+        info.appendChild(name);
+        info.appendChild(size);
+        info.appendChild(progressBar);
+        info.appendChild(progressText);
+
+        const btn = document.createElement('button');
+        btn.className = 'btn-primary btn-small';
+        btn.dataset.action = 'download';
+        btn.dataset.repo = data.repoId;
+        btn.dataset.filename = f.filename;
+        btn.textContent = 'Download';
+
+        row.appendChild(info);
+        row.appendChild(btn);
+        filesWrap.appendChild(row);
+      }
+
+      repo.appendChild(filesWrap);
+      results.appendChild(repo);
+    }
+
+    // Delegated click handler for download buttons (replaces inline onclick).
+    document.getElementById('searchResults').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="download"]');
+      if (!btn || btn.disabled) return;
+      downloadModel(btn.dataset.repo, btn.dataset.filename, btn);
+    });
+
+    async function downloadModel(repoId, filename, btn) {
+      const hfToken = document.getElementById('hfToken').value.trim();
+      if (!btn) {
+        const row = document.querySelector(`#searchResults .gguf-file[data-filename="${CSS.escape(filename)}"]`);
+        btn = row ? row.querySelector('button[data-action="download"]') : null;
+      }
+      if (!btn) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
+
+      try {
+        const result = await window.llamaAPI.downloadHuggingFaceModel(repoId, filename, hfToken || undefined);
+        if (result.skipped) {
+          showToast(`${filename} already exists`, 'info');
+          btn.textContent = 'Installed';
+          loadInstalledModels();
+          loadStorageInfo();
+          return;
+        }
+
+        // Poll progress
+        const downloadId = `${repoId}/${filename}`;
+        pollDownloadProgress(downloadId, filename, btn);
+      } catch (e) {
+        showToast(`Download failed: ${e.message || 'Unknown error'}`, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Download';
+      }
+    }
+
+    async function pollDownloadProgress(downloadId, filename, btn) {
+      const row = btn.closest('.gguf-file');
+      const progressBar = row ? row.querySelector('[data-role="progress-bar"]') : null;
+      const progressText = row ? row.querySelector('[data-role="progress-text"]') : null;
+      if (progressBar) progressBar.style.display = 'block';
+      if (progressText) progressText.style.display = 'block';
+
+      const poll = async () => {
+        try {
+          const progress = await window.llamaAPI.getDownloadProgress(downloadId);
+          if (!progress) {
+            setTimeout(poll, 1000);
+            return;
+          }
+
+          if (progress.status === 'completed') {
+            if (progressBar) progressBar.querySelector('.progress-fill').style.width = '100%';
+            if (progressText) progressText.textContent = 'Complete!';
+            btn.textContent = 'Installed';
+            showToast(`${filename} downloaded successfully`, 'success');
+            loadInstalledModels();
+            loadStorageInfo();
+            return;
+          }
+
+          if (progress.status === 'error') {
+            if (progressText) progressText.textContent = `Error: ${progress.error}`;
+            btn.disabled = false;
+            btn.textContent = 'Retry';
+            showToast(`Download error: ${progress.error}`, 'error');
+            return;
+          }
+
+          if (progress.status === 'downloading') {
+            const pct = progress.total ? Math.round(progress.progress * 100) : 0;
+            if (progressBar) progressBar.querySelector('.progress-fill').style.width = `${pct}%`;
+            if (progressText) {
+              const current = formatBytes(progress.current);
+              const total = formatBytes(progress.total);
+              progressText.textContent = progress.total ? `${pct}% (${current} / ${total})` : 'Downloading...';
+            }
+            btn.textContent = `${pct}%`;
+            setTimeout(poll, 500);
+          }
+        } catch (e) {
+          setTimeout(poll, 1000);
+        }
+      };
+
+      poll();
+    }
+
+    // --- Utilities ---
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // --- Developer ---
+    async function loadApiInfo() {
+      try {
+        const health = await window.llamaAPI.getApiHealth ? await window.llamaAPI.getApiHealth() : null;
+        const serverRunning = health && health.status === 'ok';
+        const endpoint = serverRunning ? 'http://127.0.0.1:13439/v1' : 'Server offline';
+        document.getElementById('apiEndpoint').textContent = endpoint;
+        document.getElementById('apiStatus').textContent = serverRunning ? 'Running' : 'Stopped';
+        document.getElementById('apiStatus').style.color = serverRunning ? '#27ae60' : '#e74c3c';
+      } catch (e) {
+        const endpoint = 'http://127.0.0.1:13439/v1';
+        document.getElementById('apiEndpoint').textContent = endpoint;
+        document.getElementById('apiStatus').textContent = 'Unknown';
+        document.getElementById('apiStatus').style.color = '#888';
+      }
+    }
+
+    async function openApiExplorer() {
+      try {
+        if (window.llamaAPI && window.llamaAPI.openDocumentation) {
+          await window.llamaAPI.openDocumentation('/api-explorer');
+        } else {
+          showToast('Documentation viewer not available', 'error');
+        }
+      } catch (e) {
+        showToast('Could not open API Explorer', 'error');
+      }
+    }
+
+    async function copyApiEndpoint() {
+      try {
+        const endpoint = document.getElementById('apiEndpoint').textContent;
+        if (endpoint && endpoint !== 'Unavailable' && endpoint !== 'Server offline') {
+          await navigator.clipboard.writeText(endpoint);
+          showToast('Endpoint copied to clipboard', 'success');
+        } else {
+          showToast('API endpoint not available', 'error');
+        }
+      } catch (e) {
+        showToast('Failed to copy endpoint', 'error');
+      }
+    }
+
+    async function openDocs() {
+      try {
+        if (window.llamaAPI && window.llamaAPI.openDocumentation) {
+          await window.llamaAPI.openDocumentation('/docs/api');
+        } else {
+          window.open('https://github.com/Hagwell81/alpaca-bonsai/tree/main/docs', '_blank');
+        }
+      } catch (e) {
+        showToast('Could not open documentation', 'error');
+      }
+    }
+
+    async function goBack() {
+      if (window.llamaAPI && window.llamaAPI.goBackToMain) {
+        await window.llamaAPI.goBackToMain();
+      } else {
+        window.location.href = 'http://127.0.0.1:13439';
+      }
+    }
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStorageInfo();
+      loadHardwareInfo();
+      loadInstalledBackends();
+      loadInstalledModels();
+      loadApiInfo();
+
+      // Initialize HF token settings from Secret_Vault
+      if (typeof initializeHFTokenSettings === 'function') {
+        initializeHFTokenSettings();
+      }
+
+      // Enter key to search
+      document.getElementById('repoSearch').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchHuggingFace();
+      });
+
+      // Listen for background download completion notifications
+      if (window.llamaAPI && window.llamaAPI.onDownloadComplete) {
+        window.llamaAPI.onDownloadComplete((data) => {
+          if (data.success) {
+            showToast(`Downloaded ${data.filename}`, 'success');
+            loadInstalledModels();
+            loadStorageInfo();
+          } else {
+            showToast(`Download failed: ${data.error || data.filename}`, 'error');
+          }
+        });
+      }
+
+      // Listen for model-switch phase events from main process so the overlay
+      // updates in real time as the server stops, restarts, and warms up.
+      if (window.llamaAPI && window.llamaAPI.onModelSwitchStatus) {
+        window.llamaAPI.onModelSwitchStatus((data) => {
+          if (!data || !data.phase) return;
+          if (data.phase === 'error') {
+            finishSwitchOverlay(data.error || 'Unknown error');
+            return;
+          }
+          markSwitchPhase(data.phase);
+        });
+      }
+
+      // Resume polling for any in-progress downloads from before page navigation
+      resumePollingForActiveDownloads();
+    });
+
+    async function resumePollingForActiveDownloads() {
+      if (!window.llamaAPI || !window.llamaAPI.getAllDownloadProgress) return;
+      try {
+        const active = await window.llamaAPI.getAllDownloadProgress();
+        if (!active || active.length === 0) return;
+        for (const dl of active) {
+          showToast(`Resuming download: ${dl.downloadId}...`, 'info');
+          const poll = async () => {
+            try {
+              const progress = await window.llamaAPI.getDownloadProgress(dl.downloadId);
+              if (!progress || progress.status === 'completed') {
+                showToast(`Download completed: ${dl.downloadId}`, 'success');
+                loadInstalledModels();
+                loadStorageInfo();
+                return;
+              }
+              if (progress.status === 'error') {
+                showToast(`Download error: ${progress.error}`, 'error');
+                return;
+              }
+              setTimeout(poll, 1000);
+            } catch (e) {
+              setTimeout(poll, 1000);
+            }
+          };
+          poll();
+        }
+      } catch (e) {
+        console.error('Failed to resume download polling:', e);
+      }
+    }
+
+    // ============================================================================
+    // Scheduler Settings
+    // ============================================================================
+    async function loadSchedulerSettings() {
+      try {
+        if (!window.schedulerAPI || !window.schedulerAPI.getConfig) return;
+        const config = await window.schedulerAPI.getConfig();
+        if (config) {
+          const maxSelect = document.getElementById('scheduler-max-loaded');
+          const keepAliveSelect = document.getElementById('scheduler-keep-alive');
+          if (maxSelect) maxSelect.value = String(config.maxLoadedModels || 3);
+          if (keepAliveSelect) {
+            const val = config.keepAliveDurationMs;
+            if (Number.isFinite(val)) {
+              keepAliveSelect.value = String(val);
+            } else {
+              keepAliveSelect.value = 'Infinity';
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load scheduler settings:', err);
+      }
+    }
+
+    async function saveSchedulerSettings() {
+      if (!window.schedulerAPI || !window.schedulerAPI.updateConfig) {
+        showToast('Scheduler API not available', 'error');
+        return;
+      }
+      const maxSelect = document.getElementById('scheduler-max-loaded');
+      const keepAliveSelect = document.getElementById('scheduler-keep-alive');
+      const maxLoadedModels = parseInt(maxSelect.value, 10);
+      const keepAliveDurationMs = keepAliveSelect.value === 'Infinity' ? Infinity : parseInt(keepAliveSelect.value, 10);
+
+      try {
+        const result = await window.schedulerAPI.updateConfig({
+          maxLoadedModels,
+          keepAliveDurationMs,
+        });
+        if (result.success) {
+          showToast('Model lifecycle settings saved', 'success');
+        } else {
+          showToast('Failed to save: ' + (result.error || 'Unknown error'), 'error');
+        }
+      } catch (err) {
+        showToast('Failed to save settings: ' + err.message, 'error');
+      }
+    }
+
+    async function resetSchedulerSettings() {
+      document.getElementById('scheduler-max-loaded').value = '3';
+      document.getElementById('scheduler-keep-alive').value = '300000';
+      await saveSchedulerSettings();
+      showToast('Settings reset to defaults', 'info');
+    }
+
+    async function importLocalModel() {
+      if (!window.llamaAPI || !window.llamaAPI.importLocalModel) {
+        showToast('Import API not available', 'error');
+        return;
+      }
+      try {
+        const result = await window.llamaAPI.importLocalModel();
+        if (result.canceled) return;
+        if (result.success) {
+          showToast(`Imported ${result.filename} (${result.sizeFormatted})`, 'success');
+          await loadInstalledModels();
+        } else {
+          showToast('Import failed: ' + (result.error || 'Unknown error'), 'error');
+        }
+      } catch (err) {
+        showToast('Import failed: ' + (err && err.message ? err.message : String(err)), 'error');
+      }
+    }
+
+    async function importVisionModel() {
+      if (!window.llamaAPI || !window.llamaAPI.importVisionModel) {
+        showToast('Import API not available', 'error');
+        return;
+      }
+      try {
+        const result = await window.llamaAPI.importVisionModel();
+        if (result.canceled) return;
+        if (result.success) {
+          showToast(`Imported vision model ${result.filename} + ${result.mmprojFilename}`, 'success');
+          await loadInstalledModels();
+        } else {
+          showToast('Import failed: ' + (result.error || 'Unknown error'), 'error');
+        }
+      } catch (err) {
+        showToast('Import failed: ' + (err && err.message ? err.message : String(err)), 'error');
+      }
+    }
+
+    // Load scheduler settings on page load
+    loadSchedulerSettings();
+  </script>
+</body>
+</html>

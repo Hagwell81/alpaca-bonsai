@@ -1,0 +1,76 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build artifacts
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+*.asar
+*.asar.unpacked
+*.bin
+
+# Model files
+*.gguf
+*.safetensors
+
+# Electron build outputs
+desktop/dist/
+desktop/release/
+desktop/out/
+
+# Cache directories
+.cache/
+**/.cache/
+*.cache
+
+# IDE
+.kiro/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Package manager locks (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+public/
+docs/build/
+docs/.docusaurus/
+desktop/docs/
+webui/.svelte-kit/
+webui/build/
+tui/target/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Electron-builder
+electron-builder.yml
+electron-builder.json

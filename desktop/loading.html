@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>alpaca - Loading</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0f0f0f;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    p {
+      font-size: 0.875rem;
+      color: #999;
+      margin-bottom: 2rem;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #10a37f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .progress-bar {
+      width: 280px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #10a37f;
+      width: 0%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .model-name {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>Setting up your first model</h1>
+    <p>This may take a minute while we prepare Bonsai-4B.gguf</p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+    <div class="model-name" id="status">Copying model file...</div>
+  </div>
+  <script>
+    // Update progress from main process via IPC if available
+    let progress = 0;
+    const progressEl = document.getElementById('progress');
+    const statusEl = document.getElementById('status');
+
+    function setProgress(pct, message) {
+      progress = Math.min(100, Math.max(0, pct));
+      progressEl.style.width = progress + '%';
+      if (message) statusEl.textContent = message;
+    }
+
+    // Animate to 30% quickly to show activity, then let main process drive it
+    setProgress(10, 'Copying model file...');
+    setTimeout(() => setProgress(30, 'Verifying model...'), 500);
+    setTimeout(() => setProgress(60, 'Preparing workspace...'), 1500);
+    setTimeout(() => setProgress(90, 'Almost ready...'), 3000);
+  </script>
+</body>
+</html>

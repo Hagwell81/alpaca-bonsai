@@ -1,0 +1,20 @@
+{
+  "name": "alpaca-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Alpaca local LLM",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "discord.js": "^14.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

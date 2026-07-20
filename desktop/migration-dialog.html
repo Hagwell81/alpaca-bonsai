@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Data Migration</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .dialog-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .dialog-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 24px;
+      text-align: center;
+    }
+
+    .dialog-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .dialog-header p {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .dialog-body {
+      padding: 30px 24px;
+    }
+
+    .info-section {
+      margin-bottom: 24px;
+    }
+
+    .info-section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .info-section p {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .info-section ul {
+      margin-left: 20px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .info-section li {
+      margin-bottom: 6px;
+    }
+
+    .benefits-list {
+      background: #f5f6fa;
+      border-left: 4px solid #667eea;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-top: 12px;
+    }
+
+    .benefits-list p {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 0;
+    }
+
+    .dialog-footer {
+      padding: 20px 24px;
+      background: #f8f9fa;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .btn-migrate {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-migrate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-migrate:active {
+      transform: translateY(0);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(102, 126, 234, 0.1);
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .error-message {
+      display: none;
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      color: #c33;
+      font-size: 13px;
+    }
+
+    .success-message {
+      display: none;
+      background: #efe;
+      border: 1px solid #cfc;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      color: #3c3;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dialog-container">
+    <div class="dialog-header">
+      <h1>🔐 Secure Your Data</h1>
+      <p>One-time migration to encrypted storage</p>
+    </div>
+
+    <div class="dialog-body">
+      <div class="error-message" id="errorMessage"></div>
+      <div class="success-message" id="successMessage"></div>
+
+      <div id="contentArea">
+        <div class="info-section">
+          <h2>
+            <span class="info-icon">ℹ</span>
+            What's Changing?
+          </h2>
+          <p>
+            Your user records are being upgraded to use encrypted storage for better security.
+            This is a one-time migration that will happen automatically.
+          </p>
+        </div>
+
+        <div class="info-section">
+          <h2>
+            <span class="info-icon">✓</span>
+            What You Get
+          </h2>
+          <div class="benefits-list">
+            <p>
+              <strong>🔒 Encrypted Storage:</strong> Your data is now protected with AES-256-GCM encryption<br>
+              <strong>🖥️ Machine-Bound:</strong> Secrets cannot be accessed if copied to another computer<br>
+              <strong>⚡ Seamless:</strong> No action needed — migration happens automatically
+            </p>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h2>
+            <span class="info-icon">⏱</span>
+            How Long Does It Take?
+          </h2>
+          <p>
+            The migration typically takes less than a minute. Your application will continue to work normally
+            during this process.
+          </p>
+        </div>
+      </div>
+
+      <div class="loading" id="loadingArea">
+        <div class="spinner"></div>
+        <div class="loading-text">Migrating your data to encrypted storage...</div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button class="btn-cancel" id="cancelBtn">Cancel</button>
+      <button class="btn-migrate" id="migrateBtn">Migrate Now</button>
+    </div>
+  </div>
+
+  <script>
+    const contentArea = document.getElementById('contentArea');
+    const loadingArea = document.getElementById('loadingArea');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const migrateBtn = document.getElementById('migrateBtn');
+
+    cancelBtn.addEventListener('click', () => {
+      if (window.migrationAPI && window.migrationAPI.cancelMigration) {
+        window.migrationAPI.cancelMigration();
+      }
+    });
+
+    migrateBtn.addEventListener('click', async () => {
+      try {
+        contentArea.style.display = 'none';
+        loadingArea.style.display = 'block';
+        errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
+        migrateBtn.disabled = true;
+        cancelBtn.disabled = true;
+
+        if (!window.migrationAPI || !window.migrationAPI.performMigration) {
+          throw new Error('Migration API not available');
+        }
+
+        const result = await window.migrationAPI.performMigration();
+
+        if (result.success) {
+          successMessage.textContent = 'Migration completed successfully! Your data is now encrypted.';
+          successMessage.style.display = 'block';
+          loadingArea.style.display = 'none';
+
+          // Close dialog after 2 seconds
+          setTimeout(() => {
+            if (window.migrationAPI && window.migrationAPI.closeMigrationDialog) {
+              window.migrationAPI.closeMigrationDialog();
+            }
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Migration failed');
+        }
+      } catch (err) {
+        errorMessage.textContent = 'Migration failed: ' + (err.message || 'Unknown error');
+        errorMessage.style.display = 'block';
+        loadingArea.style.display = 'none';
+        contentArea.style.display = 'block';
+        migrateBtn.disabled = false;
+        cancelBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

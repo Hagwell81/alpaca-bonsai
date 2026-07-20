@@ -1,0 +1,55 @@
+root := document
+
+document := block*
+
+block := heading | paragraph | list | code_block | blockquote | horizontal_rule | table
+
+heading := heading_marker " " inline_content newline
+
+heading_marker := "#" | "##" | "###" | "####" | "#####" | "######"
+
+paragraph := inline_content newline
+
+inline_content := (text | emphasis | strong | code | link | image)*
+
+text := [^*_`[\]#\n]+
+
+emphasis := "*" inline_content "*" | "_" inline_content "_"
+
+strong := "**" inline_content "**" | "__" inline_content "__"
+
+code := "`" [^`]+ "`"
+
+link := "[" inline_content "]" "(" url ")"
+
+image := "!" "[" alt_text "]" "(" url ")"
+
+alt_text := [^\]]*
+
+url := [^ )]+
+
+list := (list_item)+
+
+list_item := list_marker " " inline_content newline
+
+list_marker := "-" | "*" | "+" | [0-9]+ "."
+
+code_block := "```" [language] newline code_content "```" newline
+
+language := [a-zA-Z0-9_-]*
+
+code_content := [^`]*
+
+blockquote := ">" " " inline_content newline
+
+horizontal_rule := ("---" | "***" | "___") newline
+
+table := table_row (table_separator table_row)+
+
+table_row := "|" table_cell ("|" table_cell)* "|" newline
+
+table_cell := [^|\n]*
+
+table_separator := "|" ("-"+ | ":-"+ | "-"+":") ("|" ("-"+ | ":-"+ | "-"+":"))* "|" newline
+
+newline := "\n"
